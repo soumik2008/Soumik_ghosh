@@ -1,0 +1,42 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.file-card {
+    transition: transform 0.2s;
+}
+
+.file-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-group .btn {
+    border-radius: 5px;
+}
+
+.table th {
+    border-top: none;
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+.fas, .fab {
+    margin-right: 5px;
+}
