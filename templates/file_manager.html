@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-folder"></i> File Manager</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+        <i class="fas fa-upload"></i> Upload New File
+    </button>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-file-code"></i> Your Python Files</h5>
+            </div>
+            <div class="card-body">
+                {% if files %}
+                <div class="row">
+                    {% for file in files %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card file-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title">
+                                            <i class="fas fa-file-code text-primary"></i>
+                                            {{ file.original_name }}
+                                        </h6>
+                                        <p class="card-text mb-1">
+                                            <small class="text-muted">
+                                                Uploaded: {{ file.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                            </small>
+                                        </p>
+                                        <p class="card-text">
+                                            Status: 
+                                            <span class="badge bg-{{ 'success' if file.status == 'running' else 'secondary' }}">
+                                                {{ file.status|upper }}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="btn-group">
+                                        {% if file.status == 'running' %}
+                                            <a href="{{ url_for('stop_file', file_id=file.id) }}" class="btn btn-warning btn-sm">
+                                                <i class="fas fa-stop"></i>
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('start_file', file_id=file.id) }}" class="btn btn-success btn-sm">
+                                                <i class="fas fa-play"></i>
+                                            </a>
+                                        {% endif %}
+                                        <a href="{{ url_for('view_logs', file_id=file.id) }}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('delete_file', file_id=file.id) }}" class="btn btn-danger btn-sm" 
+                                           onclick="return confirm('Delete {{ file.original_name }}?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No files found</h4>
+                    <p class="text-muted">Upload your first Python file to get started</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Python File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="python_file" class="form-label">Select Python File (.py)</label>
+                        <input type="file" class="form-control" id="python_file" name="python_file" accept=".py" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
