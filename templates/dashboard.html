@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+            <i class="fas fa-upload"></i> Upload Python File
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-file-code"></i> Your Python Files</h5>
+            </div>
+            <div class="card-body">
+                {% if files %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Filename</th>
+                                <th>Status</th>
+                                <th>Uploaded</th>
+                                <th>Last Started</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in files %}
+                            <tr>
+                                <td>
+                                    <i class="fas fa-file-code text-primary"></i>
+                                    {{ file.original_name }}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if file.status == 'running' else 'warning' if file.status == 'stopped' else 'secondary' }}">
+                                        <i class="fas fa-{{ 'play' if file.status == 'running' else 'stop' }}"></i>
+                                        {{ file.status|upper }}
+                                    </span>
+                                </td>
+                                <td>{{ file.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if file.last_started %}
+                                        {{ file.last_started.strftime('%Y-%m-%d %H:%M') }}
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        {% if file.status == 'running' %}
+                                            <a href="{{ url_for('stop_file', file_id=file.id) }}" class="btn btn-warning">
+                                                <i class="fas fa-stop"></i> Stop
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('start_file', file_id=file.id) }}" class="btn btn-success">
+                                                <i class="fas fa-play"></i> Start
+                                            </a>
+                                        {% endif %}
+                                        <a href="{{ url_for('view_logs', file_id=file.id) }}" class="btn btn-info">
+                                            <i class="fas fa-eye"></i> Logs
+                                        </a>
+                                        <a href="{{ url_for('delete_file', file_id=file.id) }}" class="btn btn-danger" 
+                                           onclick="return confirm('Are you sure you want to delete {{ file.original_name }}?')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Python files uploaded yet</h4>
+                    <p class="text-muted">Upload your first Python file to get started</p>
+                    <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                        <i class="fas fa-upload"></i> Upload First File
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Python File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="python_file" class="form-label">Select Python File (.py)</label>
+                        <input type="file" class="form-control" id="python_file" name="python_file" accept=".py" required>
+                        <div class="form-text">Maximum file size: 16MB. Only .py files are allowed.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
