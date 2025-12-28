@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Python Hosting{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <h1>Premium Python File Hosting</h1>
+        <p>Upload, manage, and run your Python scripts with ease. Professional hosting solution with beautiful interface and full control.</p>
+        {% if not current_user.is_authenticated %}
+            <div class="mt-4">
+                <a href="{{ url_for('register') }}" class="btn btn-success btn-lg me-3">
+                    <i class="fas fa-rocket"></i> Get Started Free
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+            </div>
+        {% else %}
+            <div class="mt-4">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <i class="fas fa-upload fa-3x text-primary mb-3"></i>
+                    <h4 class="card-title">Easy Upload</h4>
+                    <p class="card-text">Upload your Python files with drag & drop interface. Simple and intuitive.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <i class="fas fa-play-circle fa-3x text-success mb-3"></i>
+                    <h4 class="card-title">Run Scripts</h4>
+                    <p class="card-text">Start and stop your Python scripts with one click. Full process control.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <i class="fas fa-shield-alt fa-3x text-warning mb-3"></i>
+                    <h4 class="card-title">Secure & Safe</h4>
+                    <p class="card-text">Your files are secure. User authentication and authorization for safety.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-code"></i> Python Hosting Features</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i> Upload Python (.py) files</li>
+                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i> Start/Stop execution</li>
+                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i> Delete files</li>
+                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i> View file content</li>
+                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i> Download files</li>
+                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i> Process monitoring</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-rocket"></i> Getting Started</h4>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li class="mb-2">Register for a free account</li>
+                        <li class="mb-2">Login to your dashboard</li>
+                        <li class="mb-2">Upload Python files</li>
+                        <li class="mb-2">Start running your scripts</li>
+                        <li class="mb-2">Monitor and manage processes</li>
+                    </ol>
+                    {% if not current_user.is_authenticated %}
+                        <div class="mt-4">
+                            <a href="{{ url_for('register') }}" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> Create Account Now
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

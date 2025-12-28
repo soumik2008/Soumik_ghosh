@@ -1,0 +1,798 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | PyHost Pro{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Welcome Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="glass-card p-5 animate__animated animate__fadeInDown">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-5 fw-bold mb-3">Welcome back, <span class="gradient-text">{{ current_user.username }}</span>! 👋</h1>
+                        <p class="lead text-muted">Manage your Python files with our premium hosting platform.</p>
+                    </div>
+                    <div class="d-none d-lg-block">
+                        <div class="stats-icon files">
+                            <i class="fas fa-code"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-5 animate__animated animate__fadeInUp">
+        <div class="col-md-4 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon files">
+                    <i class="fas fa-file-code"></i>
+                </div>
+                <h3 class="stats-number">{{ files|length }}</h3>
+                <h5>Total Files</h5>
+                <p class="text-muted">Python scripts uploaded</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon running">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <h3 class="stats-number">{{ files|selectattr('is_running')|list|length }}</h3>
+                <h5>Running</h5>
+                <p class="text-muted">Active processes</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon storage">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h3 class="stats-number">{{ files|length * 0.5|round(2) }}</h3>
+                <h5>Storage Used</h5>
+                <p class="text-muted">MB of storage</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Section - SMALLER SIZE -->
+    <div class="row mb-5 animate__animated animate__fadeIn">
+        <div class="col-12">
+            <div class="glass-card p-4">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="stats-icon files me-3">
+                        <i class="fas fa-upload"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-1">Upload Python File</h4>
+                        <p class="text-muted mb-0">Drag & drop or click to upload .py files</p>
+                    </div>
+                </div>
+                
+                <form id="uploadForm" method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                    <input type="file" name="file" id="fileInput" accept=".py" hidden required>
+                    <div class="upload-area-smaller" id="uploadArea">
+                        <div class="upload-content">
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                            <h5 class="mb-2 upload-title">Drag & Drop Your Python File Here</h5>
+                            <p class="text-muted mb-3 upload-subtitle">Maximum file size: 16MB • Only .py files allowed</p>
+                            <div class="upload-file-text">Upload File</div>
+                            <button type="button" class="btn btn-primary btn-sm px-3 mt-2" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-folder-open me-2"></i> Browse Files
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Management -->
+    <div class="row animate__animated animate__fadeIn">
+        <div class="col-lg-8 mb-4">
+            <div class="glass-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon files me-3">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0">Your Python Files</h4>
+                            <small class="text-muted">{{ files|length }} files uploaded</small>
+                        </div>
+                    </div>
+                    <span class="badge bg-primary rounded-pill px-3 py-2">
+                        <i class="fas fa-sort-amount-down me-1"></i> Latest First
+                    </span>
+                </div>
+
+                {% if files %}
+                    <div class="row">
+                        {% for file in files %}
+                        <div class="col-md-6 mb-4">
+                            <div class="file-card-premium {% if file.is_running %}running{% endif %}">
+                                <div class="file-icon-premium {% if file.is_running %}running{% endif %}">
+                                    <i class="fas fa-file-code"></i>
+                                </div>
+                                
+                                <h5 class="file-name-premium" title="{{ file.filename }}">{{ file.filename }}</h5>
+                                
+                                <div class="file-date-premium">
+                                    <i class="far fa-calendar"></i>
+                                    {{ file.upload_date.strftime('%Y-%m-%d') }}
+                                    <i class="far fa-clock ms-3"></i>
+                                    {{ file.upload_date.strftime('%H:%M') }}
+                                </div>
+                                
+                                <div class="status-badge-premium {% if file.is_running %}status-running{% else %}status-stopped{% endif %}">
+                                    {% if file.is_running %}
+                                        <i class="fas fa-circle me-2 fa-xs"></i> Running
+                                    {% else %}
+                                        <i class="fas fa-circle me-2 fa-xs"></i> Stopped
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="action-buttons">
+                                    <button class="action-btn btn-view btn-view-modal" data-file-id="{{ file.id }}" title="View Code">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    
+                                    <a href="{{ url_for('download_file', file_id=file.id ) }}" class="action-btn btn-download" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    
+                                    {% if file.is_running %}
+                                        <!-- Stop button - find the PID -->
+                                        {% for proc in processes %}
+                                            {% if proc.filename == file.filename %}
+                                            <form method="POST" action="{{ url_for('stop_file', pid=proc.pid) }}" class="d-inline">
+                                                <button type="submit" class="action-btn btn-stop" title="Stop">
+                                                    <i class="fas fa-stop"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <form method="POST" action="{{ url_for('start_file', file_id=file.id) }}" class="d-inline">
+                                            <button type="submit" class="action-btn btn-start" title="Start">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    <form method="POST" action="{{ url_for('delete_file', file_id=file.id) }}" class="d-inline">
+                                        <button type="submit" class="action-btn btn-delete" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="stats-icon files mb-4" style="margin: 0 auto;">
+                            <i class="fas fa-file-import"></i>
+                        </div>
+                        <h4>No files uploaded yet</h4>
+                        <p class="text-muted mb-4">Upload your first Python file to get started</p>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-plus me-2"></i> Upload First File
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="col-lg-4">
+            <!-- Running Processes - Icon removed and text centered for mobile -->
+            <div class="glass-card p-4 mb-4">
+                <div class="d-flex align-items-center mb-4 desktop-view">
+                    <div class="stats-icon running me-3">
+                        <i class="fas fa-running"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">Running Processes</h4>
+                        <small class="text-muted">Active Python scripts</small>
+                    </div>
+                </div>
+                
+                <!-- Mobile View - Centered Text -->
+                <div class="text-center mb-4 mobile-view">
+                    <h4 class="mb-0">Running Processes</h4>
+                    <small class="text-muted">Active Python scripts</small>
+                </div>
+                
+                {% if processes %}
+                    {% for proc in processes %}
+                    <div class="process-item-premium">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ proc.filename }}</h6>
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-clock me-1"></i> Started: {{ proc.start_time[:10] }}
+                                </small>
+                                <small class="text-success d-block mt-2">
+                                    <i class="fas fa-circle me-1 fa-xs"></i> {{ proc.status }}
+                                </small>
+                            </div>
+                            <form method="POST" action="{{ url_for('stop_file', pid=proc.pid) }}">
+                                <button type="submit" class="btn btn-sm btn-danger rounded-circle" title="Stop Process">
+                                    <i class="fas fa-stop"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-hashtag me-1"></i> PID: {{ proc.pid }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <div class="stats-icon files mb-3" style="margin: 0 auto; opacity: 0.5;">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <h5 class="text-muted">No running processes</h5>
+                        <p class="text-muted mb-0">Start a Python file to see it here</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="glass-card p-4">
+                <div class="text-center mb-4">
+                    <h4 class="mb-0">Quick Actions</h4>
+                    <small class="text-muted">Common operations</small>
+                </div>
+                
+                <div class="d-grid gap-3">
+                    <!-- Logout button - RED BACKGROUND -->
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-lg" style="background-color: #dc3545; border-color: #dc3545;">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </a>
+                    
+                    <!-- Upload New File button - BLUE BACKGROUND -->
+                    <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('fileInput').click()" style="background-color: #007bff; border-color: #007bff;">
+                        <i class="fas fa-plus me-2"></i> Upload New File
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* SMALLER Upload Area */
+.upload-area-smaller {
+    border: 3px dashed var(--color-primary);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+    background: rgba(102, 126, 234, 0.05);
+    cursor: pointer;
+    transition: var(--transition-normal);
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-area-smaller:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: var(--color-secondary);
+}
+
+.upload-area-smaller.dragover {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: var(--color-success);
+    transform: scale(1.02);
+}
+
+.upload-area-smaller .upload-content i {
+    font-size: 3rem;
+    color: var(--color-primary);
+    margin-bottom: 1.5rem;
+}
+
+/* Smaller buttons for upload actions */
+.upload-content .btn-sm {
+    padding: 0.4rem 1rem;
+    font-size: 0.875rem;
+    border-radius: var(--radius-md);
+}
+
+.upload-content .btn-outline-secondary.btn-sm {
+    padding: 0.4rem 0.8rem;
+}
+
+/* Bold Upload Now button text */
+.upload-content .btn-success .upload-now-text {
+    font-weight: 700 !important;
+    font-size: 0.9rem;
+}
+
+/* Adjust text sizes in upload area */
+.upload-area-smaller .upload-content .upload-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.upload-area-smaller .upload-content .upload-subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Upload File Text - logo ke niche */
+.upload-area-smaller .upload-content .upload-file-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-primary);
+    margin: 0.75rem 0;
+    padding: 0.5rem 1rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: var(--radius-md);
+    display: inline-block;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.upload-area-smaller .upload-content .file-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+}
+
+.upload-area-smaller .upload-content .file-size {
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+/* Button margins */
+.upload-area-smaller .upload-content .btn {
+    margin-top: 0.5rem;
+}
+
+/* Rest of the CSS */
+.gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.upload-preview {
+    display: none;
+    padding: 2rem;
+    text-align: center;
+}
+
+.preview-content {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+.file-card-premium {
+    animation: fadeIn 0.5s ease both;
+}
+
+/* Quick Action Button Hover Effects */
+.btn-danger.btn-lg:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+}
+
+.btn-primary.btn-sm:hover {
+    background-color: #0069d9 !important;
+    border-color: #0062cc !important;
+}
+
+/* Running Processes Section Styling */
+/* Hide mobile view by default, show only on mobile */
+.mobile-view {
+    display: none;
+    text-align: center;
+    width: 100%;
+}
+
+.desktop-view {
+    display: flex;
+}
+
+/* Mobile screens के लिए */
+@media (max-width: 768px) {
+    /* Running Processes section - icon हटाओ और text को center करो */
+    .desktop-view {
+        display: none !important;
+    }
+    
+    .mobile-view {
+        display: block !important;
+        text-align: center !important;
+        width: 100% !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    /* Quick Actions को center align करें */
+    .glass-card .text-center {
+        text-align: center !important;
+        width: 100% !important;
+    }
+    
+    /* Quick Actions के button को भी center करें */
+    .glass-card .d-grid {
+        justify-content: center;
+    }
+    
+    .glass-card .btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Welcome section adjustment for mobile */
+    .display-5 {
+        font-size: 2.5rem !important;
+    }
+    
+    /* Stats cards adjustment */
+    .stats-card {
+        padding: 1.5rem !important;
+    }
+    
+    /* File cards adjustment */
+    .file-card-premium {
+        margin-bottom: 1rem;
+    }
+    
+    /* Running processes items */
+    .process-item-premium {
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Ensure the entire Running Processes card content is properly aligned */
+    .glass-card .text-center.mb-4 h4 {
+        text-align: center;
+        width: 100%;
+        display: block;
+    }
+    
+    .glass-card .text-center.mb-4 small {
+        text-align: center;
+        width: 100%;
+        display: block;
+    }
+}
+
+/* For larger screens - ensure desktop view shows properly */
+@media (min-width: 769px) {
+    .desktop-view {
+        display: flex !important;
+    }
+    
+    .mobile-view {
+        display: none !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const uploadForm = document.getElementById('uploadForm');
+    
+    // Enhanced drag & drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+        uploadArea.innerHTML = `
+            <div class="upload-content">
+                <i class="fas fa-file-upload fa-3x mb-3"></i>
+                <h5 class="mb-2 upload-title">Drop to Upload</h5>
+                <p class="text-muted upload-subtitle">Release to upload your Python file</p>
+                <div class="upload-file-text">Upload File</div>
+            </div>
+        `;
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+        uploadArea.innerHTML = `
+            <div class="upload-content">
+                <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                <h5 class="mb-2 upload-title">Drag & Drop Your Python File Here</h5>
+                <p class="text-muted mb-3 upload-subtitle">Maximum file size: 16MB • Only .py files allowed</p>
+                <div class="upload-file-text">Upload File</div>
+                <button type="button" class="btn btn-primary btn-sm px-3 mt-2" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-folder-open me-2"></i> Browse Files
+                </button>
+            </div>
+        `;
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            if (validateFile(file)) {
+                fileInput.files = e.dataTransfer.files;
+                showUploadSuccess(file);
+            } else {
+                showUploadError();
+            }
+        }
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            if (validateFile(file)) {
+                showUploadSuccess(file);
+            } else {
+                showUploadError();
+            }
+        }
+    });
+    
+    function validateFile(file) {
+        return file.name.toLowerCase().endsWith('.py') && file.size <= 16 * 1024 * 1024;
+    }
+    
+    function showUploadSuccess(file) {
+        const size = (file.size / (1024 * 1024)).toFixed(2);
+        uploadArea.innerHTML = `
+            <div class="upload-content">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h5 class="mb-2 upload-title">Ready to Upload</h5>
+                <p class="mb-2 file-name"><strong>${file.name}</strong></p>
+                <p class="text-muted mb-3 file-size">Size: ${size} MB</p>
+                <div class="upload-file-text">Upload File</div>
+                <div class="d-flex gap-3 justify-content-center mt-2">
+                    <button type="submit" class="btn btn-success btn-sm px-3">
+                        <i class="fas fa-upload me-2"></i> <span class="upload-now-text">Upload</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetUpload()">
+                        <i class="fas fa-times me-2"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    function showUploadError() {
+        uploadArea.innerHTML = `
+            <div class="upload-content">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <h5 class="mb-2 upload-title">Invalid File</h5>
+                <p class="text-muted mb-3 upload-subtitle">Only .py files up to 16MB are allowed</p>
+                <div class="upload-file-text">Upload File</div>
+                <button type="button" class="btn btn-primary btn-sm px-3 mt-2" onclick="resetUpload()">
+                    <i class="fas fa-redo me-2"></i> Try Again
+                </button>
+            </div>
+        `;
+    }
+    
+    window.resetUpload = function() {
+        fileInput.value = '';
+        uploadArea.innerHTML = `
+            <div class="upload-content">
+                <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                <h5 class="mb-2 upload-title">Drag & Drop Your Python File Here</h5>
+                <p class="text-muted mb-3 upload-subtitle">Maximum file size: 16MB • Only .py files allowed</p>
+                <div class="upload-file-text">Upload File</div>
+                <button type="button" class="btn btn-primary btn-sm px-3 mt-2" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-folder-open me-2"></i> Browse Files
+                </button>
+            </div>
+        `;
+    }
+    
+    // View file modal
+    document.querySelectorAll('.btn-view-modal').forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const fileId = this.dataset.fileId;
+            
+            try {
+                const response = await fetch(`/view/${fileId}`);
+                const data = await response.json();
+                
+                // Create premium modal
+                const modal = createPremiumModal('File Content', data.content);
+                document.body.appendChild(modal);
+            } catch (error) {
+                showToast('Error loading file content', 'danger');
+            }
+        });
+    });
+    
+    function createPremiumModal(title, content) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-premium';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        `;
+        
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: white;
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+        `;
+        
+        const header = document.createElement('div');
+        header.style.cssText = `
+            padding: 1.5rem 2rem;
+            background: var(--gradient-primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        `;
+        
+        const titleEl = document.createElement('h5');
+        titleEl.textContent = title;
+        titleEl.style.margin = '0';
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.style.cssText = `
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        `;
+        
+        closeBtn.addEventListener('mouseover', () => {
+            closeBtn.style.background = 'rgba(255,255,255,0.2)';
+        });
+        
+        closeBtn.addEventListener('mouseout', () => {
+            closeBtn.style.background = 'none';
+        });
+        
+        const body = document.createElement('div');
+        body.style.cssText = `
+            padding: 2rem;
+            overflow: auto;
+            max-height: calc(80vh - 80px);
+            background: #f8f9fa;
+        `;
+        
+        const pre = document.createElement('pre');
+        pre.style.cssText = `
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        `;
+        pre.textContent = content;
+        
+        closeBtn.addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+        
+        header.appendChild(titleEl);
+        header.appendChild(closeBtn);
+        body.appendChild(pre);
+        modalContent.appendChild(header);
+        modalContent.appendChild(body);
+        modal.appendChild(modalContent);
+        
+        return modal;
+    }
+    
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast-premium toast-${type}`;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid ${type === 'success' ? 'var(--color-success)' : 'var(--color-danger)'};
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        const icon = document.createElement('i');
+        icon.className = type === 'success' ? 'fas fa-check-circle text-success' : 'fas fa-exclamation-circle text-danger';
+        
+        const text = document.createElement('span');
+        text.textContent = message;
+        
+        toast.appendChild(icon);
+        toast.appendChild(text);
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    document.body.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    // Add animations
+    document.querySelectorAll('.file-card-premium').forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+});
+</script>
+{% endblock %}
